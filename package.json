@@ -1,0 +1,15 @@
+{
+  "name": "oilspill",
+  "version": "1.0.0",
+  "description": "Monitors the status of a stream pipeline",
+  "main": "status.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "daguej",
+  "license": "BSD-2-Clause",
+  "dependencies": {
+    "prettysize": "0.0.3",
+    "multimeter": "~0.1.1"
+  }
+}
