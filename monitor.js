@@ -11,22 +11,41 @@ var multimeter = require('multimeter'),
 
 var multi = multimeter(process);
 
-var bars = [];
+var bars = [], title, donex=0, doney=0;
 
+process.stdout.on('resize', init);
 
-
-function init(title) {
+function init() {
 	multi.charm.reset();
 	multi.write(title+'\n            WRITE                             READ\n');
+
+	var col=0, row=2, rows = process.stdout.rows, cols = Math.floor(process.stdout.columns / 80);
+
 	for (var i = 0; i < bars.length; i++) {
+		if (++row > rows) {
+			if (++col >= cols) return;
+			row = 0;
+		}
+
+		if (bars[i].writable) {
+			bars[i].writable.x = (col * 80) + 12;
+			bars[i].writable.y = row;
+		}
+		if (bars[i].readable) {
+			bars[i].readable.x = (col * 80) + 46;
+			bars[i].readable.y = row;
+		}
+
+		multi.charm.position(col * 80, row);
 		if (bars[i].stream.hr) {
 			multi.write('-----' + bars[i].label);
 			for (var n = 0; n < 80-6-bars[i].label.length; n++) multi.write('-');
-			multi.write('\n');
 		} else {
-			multi.write(bars[i].label + '\n');
+			multi.write(bars[i].label);
 		}
 	}
+
+	multi.charm.position(donex = col * 80, doney = row+1);
 	multi.write('Done 0\n');
 }
 
@@ -37,7 +56,8 @@ comms.on('init', function(msg) {
 			add(msg.streams[i]);
 		}
 	}
-	init(msg.title || 'oilspill');
+	title = msg.title || 'oilspill';
+	init();
 
 	for (var i = 0; i < bars.length; i++) {
 		updateStream(i, 'writable', msg.streams[i].writable);
@@ -60,7 +80,7 @@ comms.on('update', function(msg) {
 });
 
 comms.on('done', function(msg) {
-	multi.charm.position(6, bars.length+3).write(msg.count+'');
+	multi.charm.position(donex + 5, doney).write(msg.count+'');
 	bot();
 });
 
