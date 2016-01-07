@@ -10,6 +10,10 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "daguej",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/casetext/oilspill.git"
+  },
   "license": "BSD-2-Clause",
   "dependencies": {
     "comms": "0.0.2",
