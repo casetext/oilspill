@@ -79,8 +79,13 @@ comms.on('update', function(msg) {
 	}
 });
 
+comms.on('errored', function(msg) {
+	bars[msg.i].stream.err = true;
+	updateStream(msg.i, null);
+});
+
 comms.on('done', function(msg) {
-	multi.charm.position(donex + 5, doney).write(msg.count+'');
+	multi.charm.position(donex + 6, doney).write(msg.count+'');
 	bot();
 });
 
@@ -113,18 +118,48 @@ function add(stream) {
 
 function updateStream(i, type, state) {
 
-	if (bars[i] && bars[i][type]) {
-		var line = bars[i];
+	if (bars[i] && (bars[i][type] || type === null)) {
+		var line = bars[i],
+			bar = line[type];
 
-		var len = state.len, max = state.max;
-		if (!line.stream.objectMode) {
-			len = prettysize(len, true, true);
-			max = prettysize(max, true, true);
+		if (line.stream.err) {
+
+			multi.charm.foreground('red');
+
+			if (line.readable) multi.charm
+				.position(line.readable.x+8, line.readable.y)
+				.write('error');
+
+			if (line.writable) multi.charm
+				.position(line.writable.x+8, line.writable.y)
+				.write('error');
+
+			multi.charm.foreground('white');
+			bot();
+
+		} else {
+
+			var len = state.len, max = state.max;
+			if (!line.stream.objectMode) {
+				len = prettysize(len, true, true);
+				max = prettysize(max, true, true);
+			}
+
+			var bar = line[type];
+			bar.solid.background = state.len > state.max ? 'red' : 'blue';
+			bar.ratio(Math.min(state.max, state.len), state.max, len + ' / ' + max + ' ');
+
+			if (state.done) {
+
+				multi.charm
+				.position(bar.x + (type == 'readable' ? 9 : 7), bar.y)
+				.foreground('green')
+				.write(type == 'readable' ? 'ended' : 'finished')
+				.foreground('white');
+				bot();
+
+			}
 		}
-
-		var bar = line[type];
-		bar.solid.background = state.len > state.max ? 'red' : 'blue';
-		bar.ratio(Math.min(state.max, state.len), state.max, len + ' / ' + max + ' ');
 	}
 }
 

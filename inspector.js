@@ -1,4 +1,5 @@
-var Comms = require('comms');
+var Comms = require('comms'),
+	EventEmitter = require('events');
 
 function PipelineInspector(pipeline, opts) {
 	var self = this;
@@ -33,7 +34,18 @@ function PipelineInspector(pipeline, opts) {
 }
 
 PipelineInspector.prototype.addStreams = function(stream) {
-	this.add(stream);
+	var self = this,
+		idx = this.add(stream);
+
+	stream.on('error', onerror);
+	function onerror(err) {
+		self.streamInfo[idx].err = true;
+		self.comms.send('errored', {i:idx});
+
+		stream.removeListener('error', onerror);
+		if (EventEmitter.listenerCount(stream, 'error') === 0) stream.emit('error', err);
+	}
+
 	if (stream._readableState && stream._readableState.pipesCount) {
 		if (stream._readableState.pipesCount == 1) {
 			this.addStreams(stream._readableState.pipes);
@@ -68,7 +80,7 @@ PipelineInspector.prototype.add = function(name, stream) {
 
 
 	this.streamInfo.push(o);
-	this.streams.push(stream);
+	return this.streams.push(stream) - 1;
 };
 
 PipelineInspector.prototype.addBreak = function(name) {
@@ -96,10 +108,14 @@ PipelineInspector.prototype.update = function() {
 			info = self.streamInfo[i][type];
 
 		if (state) {
-			var len = state.length, max = state.highWaterMark;
-			if (info.len != len || info.max != max) {
+			var len = state.length,
+				max = state.highWaterMark,
+				done = type == 'readable' ? state.ended : state.finished;
+
+			if (info.len != len || info.max != max || info.done != done) {
 				info.len = len;
 				info.max = max;
+				info.done = done;
 				updates[i] = self.streamInfo[i];
 				news = true;
 			}
