@@ -1,6 +1,6 @@
 {
   "name": "oilspill",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Monitors the status of a stream pipeline",
   "main": "inspector.js",
   "bin": {

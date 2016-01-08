@@ -34,17 +34,8 @@ function PipelineInspector(pipeline, opts) {
 }
 
 PipelineInspector.prototype.addStreams = function(stream) {
-	var self = this,
-		idx = this.add(stream);
-
-	stream.on('error', onerror);
-	function onerror(err) {
-		self.streamInfo[idx].err = true;
-		self.comms.send('errored', {i:idx});
-
-		stream.removeListener('error', onerror);
-		if (EventEmitter.listenerCount(stream, 'error') === 0) stream.emit('error', err);
-	}
+	
+	this.add(stream);
 
 	if (stream._readableState && stream._readableState.pipesCount) {
 		if (stream._readableState.pipesCount == 1) {
@@ -54,6 +45,7 @@ PipelineInspector.prototype.addStreams = function(stream) {
 };
 
 PipelineInspector.prototype.add = function(name, stream) {
+	var self = this;
 	if (typeof name != 'string') {
 		stream = name;
 		name = stream.name || stream.constructor.name;
@@ -79,8 +71,20 @@ PipelineInspector.prototype.add = function(name, stream) {
 	}
 
 
-	this.streamInfo.push(o);
-	return this.streams.push(stream) - 1;
+	self.streamInfo.push(o);
+	var idx = self.streams.push(stream) - 1;
+
+
+	stream.on('error', onerror);
+	function onerror(err) {
+		self.streamInfo[idx].err = true;
+		self.comms.send('errored', {i:idx});
+
+		stream.removeListener('error', onerror);
+		if (EventEmitter.listenerCount(stream, 'error') === 0) stream.emit('error', err);
+	}
+
+	return idx;
 };
 
 PipelineInspector.prototype.addBreak = function(name) {
