@@ -1,6 +1,6 @@
 {
   "name": "oilspill",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Monitors the status of a stream pipeline",
   "main": "inspector.js",
   "bin": {
@@ -16,7 +16,7 @@
   },
   "license": "BSD-2-Clause",
   "dependencies": {
-    "comms": "0.0.2",
+    "comms": "0.1.0",
     "multimeter": "~0.1.1",
     "prettysize": "0.0.3",
     "yargs": "^3.31.0"
